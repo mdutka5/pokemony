@@ -90,19 +90,6 @@ export default function ListScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.searchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search Pokémon..."
-          placeholderTextColor="#adb5bd"
-          value={query}
-          onChangeText={setQuery}
-          autoCorrect={false}
-          autoCapitalize="none"
-          clearButtonMode="while-editing"
-        />
-      </View>
-
       {loading ? (
         <ActivityIndicator size="large" color="#e63946" style={styles.loader} />
       ) : (

@@ -1,27 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
-  Dimensions,
   Image,
+  useWindowDimensions,
 } from "react-native";
 import {
-  Camera,
   useCameraDevice,
   useCameraPermission,
-  useFrameOutput,
 } from "react-native-vision-camera";
+import { Camera, type Face } from "react-native-vision-camera-face-detector";
 import { Ionicons } from "@expo/vector-icons";
 import Animated, {
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
-import { useFaceDetector } from "react-native-vision-camera-face-detector";
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 export default function PokemonCameraScreen() {
   const [faceDetected, setFaceDetected] = useState(false);
@@ -30,53 +25,44 @@ export default function PokemonCameraScreen() {
     "back",
   );
   const device = useCameraDevice(cameraPosition);
+  const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = useWindowDimensions();
 
   const pokemonX = useSharedValue(0);
   const pokemonY = useSharedValue(0);
   const pokemonSize = useSharedValue(0);
 
-  const faceDetector = useFaceDetector({ performanceMode: "fast" });
+  // Base detector options. windowWidth/windowHeight + autoMode (passed as a
+  // separate prop below, matching the library's own example) tell the
+  // native detector to hand back `bounds` already converted into on-screen
+  // pixel coordinates. No manual scaling or mirroring math needed on our
+  // side, and no worklet/frame-processor plumbing either — this component
+  // handles it internally and just calls back with plain JS faces.
+  const faceDetectorOptions = useRef({
+    performanceMode: "fast" as const,
+    windowWidth: SCREEN_WIDTH,
+    windowHeight: SCREEN_HEIGHT,
+  }).current;
 
-  const frameOutput = useFrameOutput({
-    pixelFormat: "yuv",
-    onFrame(frame) {
-      "worklet";
-      try {
-        const faces = faceDetector.detectFaces(frame);
+  function handleFacesDetected(faces: Face[]) {
+    if (faces.length === 0) {
+      setFaceDetected(false);
+      return;
+    }
 
-        if (faces && faces.length > 0) {
-          const face = faces[0];
-          if (!faceDetected) runOnJS(setFaceDetected)(true);
+    const { bounds } = faces[0];
 
-          // 1. Calculate the scale multiplier between the camera frame and your screen size
-          // Camera frames are sideways, so we swap: screen width maps to frame height
-          const scaleX = SCREEN_WIDTH / frame.height;
-          const scaleY = SCREEN_HEIGHT / frame.width;
+    pokemonSize.value = bounds.width;
+    if (cameraPosition === "front") {
+      pokemonX.value = bounds.x;
+    } else {
+      pokemonX.value = SCREEN_WIDTH - bounds.x - bounds.width;
+    }
+    // Shift up a bit so Snorlax sits a little above the face, not centered
+    // dead over it.
+    pokemonY.value = bounds.y - bounds.height * 0.25;
 
-          // 2. Adjust for the Selfie Mirror Effect if using the front camera
-          let correctedX = face.bounds.x * scaleX;
-          if (cameraPosition === "front") {
-            correctedX =
-              SCREEN_WIDTH -
-              face.bounds.x * scaleX -
-              face.bounds.width * scaleX;
-          }
-
-          // 3. Assign the correctly scaled values to your tracking animations
-          pokemonSize.value = face.bounds.width * scaleX;
-          pokemonX.value = correctedX;
-
-          // FOREHEAD MATH: Shift Y upwards by 25% of the scaled face height
-          pokemonY.value =
-            face.bounds.y * scaleY - face.bounds.height * scaleY * 0.25;
-        } else {
-          if (faceDetected) runOnJS(setFaceDetected)(false);
-        }
-      } finally {
-        frame.dispose();
-      }
-    },
-  });
+    setFaceDetected(true);
+  }
 
   const animatedPokemonStyle = useAnimatedStyle(() => {
     return {
@@ -116,7 +102,12 @@ export default function PokemonCameraScreen() {
         style={StyleSheet.absoluteFill}
         device={device}
         isActive={true}
-        outputs={[frameOutput]}
+        orientationSource="device"
+        onFacesDetected={handleFacesDetected}
+        onError={(error) => console.error("camera mount error", error)}
+        autoMode={true}
+        cameraFacing={cameraPosition}
+        {...faceDetectorOptions}
       />
 
       {faceDetected && (

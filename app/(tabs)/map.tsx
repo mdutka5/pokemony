@@ -140,25 +140,6 @@ export default function PokeMapScreen() {
     [handleSelectPokemon],
   );
 
-  const searchListHeader = useMemo(
-    () => (
-      <View style={styles.searchHeader}>
-        <Text style={styles.searchSheetTitle}>Which Pokémon is here?</Text>
-        <BottomSheetTextInput
-          style={styles.searchInput}
-          placeholder="Search Pokémon..."
-          placeholderTextColor="#adb5bd"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          autoCorrect={false}
-          autoCapitalize="none"
-          clearButtonMode="while-editing"
-        />
-      </View>
-    ),
-    [searchQuery],
-  );
-
   return (
     <View style={styles.container}>
       <MapView
@@ -238,8 +219,6 @@ export default function PokeMapScreen() {
           data={filteredPokemon}
           keyExtractor={(item) => getPokemonId(item.url)}
           renderItem={renderPokemonItem}
-          ListHeaderComponent={searchListHeader}
-          stickyHeaderIndices={[0]}
           windowSize={5}
           initialNumToRender={20}
           maxToRenderPerBatch={20}
