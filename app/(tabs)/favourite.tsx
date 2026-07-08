@@ -1,11 +1,13 @@
 import { StyleSheet, Text, View } from "react-native";
 import { useFavoritePokemon } from "../../src/context/FavoriteContext";
 import PokemonDetailView from "../../src/components/PokemonDetailView";
+import { useFavoritePokemonStore } from "../../src/context/FavoritePokemonStore";
 
 export default function FavoritesTabScreen() {
-  const { favoritePokemon } = useFavoritePokemon();
+  const favoritePokemon = useFavoritePokemonStore(
+    (state) => state.favoritePokemon,
+  );
 
-  // If the user hasn't selected a favorite Pokémon yet, show a clean fallback UI
   if (!favoritePokemon) {
     return (
       <View style={styles.emptyContainer}>

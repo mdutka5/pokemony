@@ -1,17 +1,26 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useState, useEffect } from "react";
+// 1. Swap the import to AsyncStorage
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface FavoritePokemonContextType {
   favoritePokemon: string | null;
   setFavoritePokemon: (name: string | null) => Promise<void>;
 }
 
-const FavoritePokemonContext = createContext<FavoritePokemonContextType | undefined>(undefined);
+const FavoritePokemonContext = createContext<
+  FavoritePokemonContextType | undefined
+>(undefined);
 
-const STORAGE_KEY = 'FAVORITE_POKEMON';
+const STORAGE_KEY = "FAVORITE_POKEMON";
 
-export function FavoritePokemonProvider({ children }: { children: React.ReactNode }) {
-  const [favoritePokemon, setFavoritePokemonState] = useState<string | null>(null);
+export function FavoritePokemonProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const [favoritePokemon, setFavoritePokemonState] = useState<string | null>(
+    null,
+  );
 
   // 2. Load the name string using AsyncStorage on boot
   useEffect(() => {
@@ -20,7 +29,7 @@ export function FavoritePokemonProvider({ children }: { children: React.ReactNod
         const value = await AsyncStorage.getItem(STORAGE_KEY);
         setFavoritePokemonState(value); // Will be the string or null
       } catch (e) {
-        console.error('Failed to load favorite pokemon from AsyncStorage', e);
+        console.error("Failed to load favorite pokemon from AsyncStorage", e);
       }
     }
     loadFavorite();
@@ -36,12 +45,14 @@ export function FavoritePokemonProvider({ children }: { children: React.ReactNod
         await AsyncStorage.removeItem(STORAGE_KEY);
       }
     } catch (e) {
-      console.error('Failed to save to AsyncStorage', e);
+      console.error("Failed to save to AsyncStorage", e);
     }
   };
 
   return (
-    <FavoritePokemonContext.Provider value={{ favoritePokemon, setFavoritePokemon }}>
+    <FavoritePokemonContext.Provider
+      value={{ favoritePokemon, setFavoritePokemon }}
+    >
       {children}
     </FavoritePokemonContext.Provider>
   );
@@ -49,6 +60,9 @@ export function FavoritePokemonProvider({ children }: { children: React.ReactNod
 
 export function useFavoritePokemon() {
   const context = useContext(FavoritePokemonContext);
-  if (!context) throw new Error('useFavoritePokemon must be used within FavoritePokemonProvider');
+  if (!context)
+    throw new Error(
+      "useFavoritePokemon must be used within FavoritePokemonProvider",
+    );
   return context;
 }
