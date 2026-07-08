@@ -19,18 +19,11 @@ import {
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
 import { useQuery } from "@tanstack/react-query";
+import { useMapPinsStore, type Pin } from "../../src/context/MapPinsStore";
 
 type PokemonItem = {
   name: string;
   url: string;
-};
-
-type Pin = {
-  id: string;
-  latitude: number;
-  longitude: number;
-  title: string;
-  pokemonId: string;
 };
 
 const getPokemonId = (url: string) => {
@@ -39,7 +32,10 @@ const getPokemonId = (url: string) => {
 };
 
 export default function PokeMapScreen() {
-  const [pins, setPins] = useState<Pin[]>([]);
+  const pins = useMapPinsStore((state) => state.pins);
+  const setPins = useMapPinsStore((state) => state.setPins);
+  const addPin = useMapPinsStore((state) => state.addPin);
+  const removePin = useMapPinsStore((state) => state.removePin);
   const [selectedPin, setSelectedPin] = useState<Pin | null>(null);
   const [pendingCoord, setPendingCoord] = useState<{
     latitude: number;
@@ -77,7 +73,7 @@ export default function PokeMapScreen() {
 
   const handleDeletePin = useCallback(() => {
     if (!selectedPin) return;
-    setPins((prev) => prev.filter((p) => p.id !== selectedPin.id));
+    removePin(selectedPin.id);
     detailSheetRef.current?.dismiss();
   }, [selectedPin]);
 
@@ -85,16 +81,13 @@ export default function PokeMapScreen() {
     (pokemon: PokemonItem) => {
       if (!pendingCoord) return;
       const pokemonId = getPokemonId(pokemon.url);
-      setPins((prev) => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          latitude: pendingCoord.latitude,
-          longitude: pendingCoord.longitude,
-          title: pokemon.name,
-          pokemonId,
-        },
-      ]);
+      addPin({
+        id: Date.now().toString(),
+        latitude: pendingCoord.latitude,
+        longitude: pendingCoord.longitude,
+        title: pokemon.name,
+        pokemonId,
+      });
       searchSheetRef.current?.dismiss();
     },
     [pendingCoord],

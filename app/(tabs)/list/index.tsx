@@ -9,13 +9,15 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useCallback, memo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 interface PokemonItem {
   name: string;
   url: string;
 }
+
+const PAGE_SIZE = 20;
 
 const getPokemonId = (url: string) => {
   const parts = url.split("/").filter(Boolean);
@@ -46,17 +48,36 @@ const PokemonRow = memo(({ item, onPress }: PokemonRowProps) => {
 export default function ListScreen() {
   const router = useRouter();
 
-  const { data, isLoading, error } = useQuery({
+  // 1. Switch to useInfiniteQuery
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    error,
+  } = useInfiniteQuery({
     queryKey: ["pokemon"],
-    queryFn: () =>
-      fetch("https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0").then(
-        (res) => res.json(),
-      ),
+    queryFn: ({ pageParam = 0 }) =>
+      fetch(
+        `https://pokeapi.co/api/v2/pokemon?limit=${PAGE_SIZE}&offset=${pageParam}`,
+      ).then((res) => res.json()),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.next) return undefined;
+      const url = new URL(lastPage.next);
+      return parseInt(url.searchParams.get("offset") || "0", 10);
+    },
   });
 
-  if (error) return "An error has occurred: " + error.message;
+  if (error)
+    return (
+      <Text style={styles.emptyText}>
+        An error has occurred: {error.message}
+      </Text>
+    );
 
-  const allPokemon = data?.results || [];
+  const allPokemon = data?.pages.flatMap((page) => page.results) || [];
 
   const handlePress = useCallback(
     (name: string) => {
@@ -72,6 +93,23 @@ export default function ListScreen() {
     [handlePress],
   );
 
+  const loadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
+  const renderFooter = () => {
+    if (!isFetchingNextPage) return null;
+    return (
+      <ActivityIndicator
+        size="small"
+        color="#e63946"
+        style={{ marginVertical: 16 }}
+      />
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {isLoading ? (
@@ -84,6 +122,9 @@ export default function ListScreen() {
           initialNumToRender={20}
           maxToRenderPerBatch={20}
           renderItem={renderItem}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={renderFooter}
         />
       )}
     </SafeAreaView>
@@ -92,23 +133,6 @@ export default function ListScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f8f9fa" },
-  searchContainer: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: "#f8f9fa",
-  },
-  searchInput: {
-    backgroundColor: "#fff",
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: "#333",
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
-  },
   loader: {
     flex: 1,
     justifyContent: "center",
