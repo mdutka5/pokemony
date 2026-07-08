@@ -81,7 +81,10 @@ export default function PokemonDetailView({
     details.sprites.front_default;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView
+      style={styles.container}
+      edges={Platform.OS === "android" ? ["top"] : ["top", "bottom"]}
+    >
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.content}
