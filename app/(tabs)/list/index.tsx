@@ -70,13 +70,6 @@ export default function ListScreen() {
     },
   });
 
-  if (error)
-    return (
-      <Text style={styles.emptyText}>
-        An error has occurred: {error.message}
-      </Text>
-    );
-
   const allPokemon = data?.pages.flatMap((page) => page.results) || [];
 
   const handlePress = useCallback(
@@ -109,6 +102,13 @@ export default function ListScreen() {
       />
     );
   };
+
+  if (error)
+    return (
+      <Text style={styles.emptyText}>
+        An error has occurred: {error.message}
+      </Text>
+    );
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>

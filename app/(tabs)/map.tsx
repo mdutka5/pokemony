@@ -12,7 +12,7 @@ import MapView, {
   LongPressEvent,
   PROVIDER_GOOGLE,
 } from "react-native-maps";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   BottomSheetFlatList,
   BottomSheetModal,
@@ -33,7 +33,6 @@ const getPokemonId = (url: string) => {
 
 export default function PokeMapScreen() {
   const pins = useMapPinsStore((state) => state.pins);
-  const setPins = useMapPinsStore((state) => state.setPins);
   const addPin = useMapPinsStore((state) => state.addPin);
   const removePin = useMapPinsStore((state) => state.removePin);
   const [selectedPin, setSelectedPin] = useState<Pin | null>(null);
@@ -42,8 +41,11 @@ export default function PokeMapScreen() {
     longitude: number;
   } | null>(null);
 
+  // FIX: unique key so this regular useQuery doesn't share a cache
+  // entry with the list tab's useInfiniteQuery(["pokemon"]) — mixing
+  // the two under the same key mixes up their data shapes.
   const { data, error } = useQuery({
-    queryKey: ["pokemon"],
+    queryKey: ["pokemon", "map"],
     queryFn: () =>
       fetch("https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0").then(
         (res) => res.json(),
@@ -55,8 +57,6 @@ export default function PokeMapScreen() {
 
   const detailSnapPoints = useMemo(() => ["35%"], []);
   const searchSnapPoints = useMemo(() => ["55%", "90%"], []);
-
-  if (error) return "An error has occurred: " + error.message;
 
   const allPokemon = data?.results || [];
 
@@ -120,6 +120,17 @@ export default function PokeMapScreen() {
     },
     [handleSelectPokemon],
   );
+
+  // hooks are all above this line — safe to gate the return now
+  if (error) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.sheetTitle}>
+          An error has occurred: {error.message}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
