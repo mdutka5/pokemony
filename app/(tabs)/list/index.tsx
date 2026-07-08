@@ -5,11 +5,11 @@ import {
   FlatList,
   Pressable,
   Image,
-  TextInput,
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useState, useEffect, useMemo, useCallback, memo } from "react";
+import { useCallback, memo } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 interface PokemonItem {
   name: string;
@@ -45,28 +45,17 @@ const PokemonRow = memo(({ item, onPress }: PokemonRowProps) => {
 export default function ListScreen() {
   const router = useRouter();
 
-  const [allPokemon, setAllPokemon] = useState<PokemonItem[]>([]);
-  const [query, setQuery] = useState("");
-  const [loading, setLoading] = useState(false);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["pokemon"],
+    queryFn: () =>
+      fetch("https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0").then(
+        (res) => res.json(),
+      ),
+  });
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(
-          "https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0",
-        );
-        const json = await response.json();
-        setAllPokemon(json.results);
-      } catch (error) {
-        console.error("Error fetching Pokémon:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (error) return "An error has occurred: " + error.message;
 
-    fetchAll();
-  }, []);
+  const allPokemon = data?.results || [];
 
   const handlePress = useCallback(
     (name: string) => {
@@ -82,26 +71,17 @@ export default function ListScreen() {
     [handlePress],
   );
 
-  const filteredPokemon = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return allPokemon;
-    return allPokemon.filter((p) => p.name.includes(q));
-  }, [allPokemon, query]);
-
   return (
     <View style={styles.container}>
-      {loading ? (
+      {isLoading ? (
         <ActivityIndicator size="large" color="#e63946" style={styles.loader} />
       ) : (
         <FlatList
-          data={filteredPokemon}
+          data={allPokemon}
           keyExtractor={(item) => getPokemonId(item.url)}
           windowSize={5}
           initialNumToRender={20}
           maxToRenderPerBatch={20}
-          ListEmptyComponent={
-            <Text style={styles.emptyText}>No Pokémon found for "{query}"</Text>
-          }
           renderItem={renderItem}
         />
       )}

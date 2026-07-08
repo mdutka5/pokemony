@@ -16,14 +16,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BottomSheetFlatList,
   BottomSheetModal,
-  BottomSheetTextInput,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { useQuery } from "@tanstack/react-query";
 
-interface PokemonItem {
+type PokemonItem = {
   name: string;
   url: string;
-}
+};
 
 type Pin = {
   id: string;
@@ -45,8 +45,14 @@ export default function PokeMapScreen() {
     latitude: number;
     longitude: number;
   } | null>(null);
-  const [allPokemon, setAllPokemon] = useState<PokemonItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+
+  const { data, error } = useQuery({
+    queryKey: ["pokemon"],
+    queryFn: () =>
+      fetch("https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0").then(
+        (res) => res.json(),
+      ),
+  });
 
   const detailSheetRef = useRef<BottomSheetModal>(null);
   const searchSheetRef = useRef<BottomSheetModal>(null);
@@ -54,31 +60,13 @@ export default function PokeMapScreen() {
   const detailSnapPoints = useMemo(() => ["35%"], []);
   const searchSnapPoints = useMemo(() => ["55%", "90%"], []);
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        const response = await fetch(
-          "https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0",
-        );
-        const json = await response.json();
-        setAllPokemon(json.results);
-      } catch (error) {
-        console.error("Error fetching Pokémon:", error);
-      }
-    };
-    fetchAll();
-  }, []);
+  if (error) return "An error has occurred: " + error.message;
 
-  const filteredPokemon = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return allPokemon.slice(0, 40);
-    return allPokemon.filter((p) => p.name.includes(q));
-  }, [allPokemon, searchQuery]);
+  const allPokemon = data?.results || [];
 
   const handleLongPress = useCallback((event: LongPressEvent) => {
     const { latitude, longitude } = event.nativeEvent.coordinate;
     setPendingCoord({ latitude, longitude });
-    setSearchQuery("");
     searchSheetRef.current?.present();
   }, []);
 
@@ -216,7 +204,7 @@ export default function PokeMapScreen() {
         keyboardBlurBehavior="restore"
       >
         <BottomSheetFlatList
-          data={filteredPokemon}
+          data={allPokemon}
           keyExtractor={(item) => getPokemonId(item.url)}
           renderItem={renderPokemonItem}
           windowSize={5}
