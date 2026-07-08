@@ -35,7 +35,8 @@
         {
           "androidGoogleMapsApiKey": "${GOOGLE_MAPS_API_KEY}"
         }
-      ]
+      ],
+      "@react-native-vector-icons/material-design-icons"
     ]
   }
 }

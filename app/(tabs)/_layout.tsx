@@ -1,103 +1,38 @@
-import { Tabs, useRouter } from "expo-router";
-import { Pressable, StyleSheet } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { NativeTabs } from "expo-router/unstable-native-tabs";
+import { useRouter } from "expo-router";
 
 export default function TabsLayout() {
   const router = useRouter();
 
   return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: "#ff4d4d",
-        tabBarInactiveTintColor: "#8e8e93",
-        headerShown: true,
-        headerLeft: () => (
-          <Pressable
-            onPress={() => router.replace("/")}
-            style={({ pressed }) => [
-              styles.headerButton,
-              pressed && styles.buttonPressed,
-            ]}
-          >
-            <Ionicons name="home-outline" size={24} color="#212529" />
-          </Pressable>
-        ),
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "PokeApka",
-          headerLeft: () => null,
-          href: null,
-        }}
-      />
+    <NativeTabs>
+      <NativeTabs.Trigger name="favourite">
+        <NativeTabs.Trigger.Icon
+          sf={{ default: "heart", selected: "heart.fill" }}
+          md={{ default: "favorite", selected: "favorite" }}
+        />
+      </NativeTabs.Trigger>
 
-      <Tabs.Screen
-        name="favourite"
-        options={{
-          title: "Favourite",
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? "heart" : "heart-outline"}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
+      <NativeTabs.Trigger name="list">
+        <NativeTabs.Trigger.Icon
+          sf={{ default: "photo", selected: "photo.fill" }}
+          md={{ default: "image", selected: "image" }}
+        />
+      </NativeTabs.Trigger>
 
-      <Tabs.Screen
-        name="list"
-        options={{
-          title: "Pokédex",
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? "images" : "images-outline"}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
+      <NativeTabs.Trigger name="camera">
+        <NativeTabs.Trigger.Icon
+          sf={{ default: "camera", selected: "camera.fill" }}
+          md={{ default: "photo_camera", selected: "photo_camera" }}
+        />
+      </NativeTabs.Trigger>
 
-      <Tabs.Screen
-        name="camera"
-        options={{
-          title: "Crazy Vision",
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? "camera" : "camera-outline"}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-
-      <Tabs.Screen
-        name="map"
-        options={{
-          title: "PokeMap",
-          tabBarIcon: ({ focused, color, size }) => (
-            <Ionicons
-              name={focused ? "map" : "map-outline"}
-              size={size}
-              color={color}
-            />
-          ),
-        }}
-      />
-    </Tabs>
+      <NativeTabs.Trigger name="map">
+        <NativeTabs.Trigger.Icon
+          sf={{ default: "map", selected: "map.fill" }}
+          md={{ default: "map", selected: "map" }}
+        />
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }
-
-const styles = StyleSheet.create({
-  headerButton: {
-    padding: 8,
-    marginLeft: 12,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  buttonPressed: { opacity: 0.5 },
-});

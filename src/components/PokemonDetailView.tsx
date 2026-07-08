@@ -6,9 +6,11 @@ import {
   ActivityIndicator,
   ScrollView,
   Pressable,
+  Platform,
 } from "react-native";
 import { useState, useEffect } from "react";
 import { useFavoritePokemonStore } from "../context/FavoritePokemonStore";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface PokemonDetails {
   id: number;
@@ -79,65 +81,70 @@ export default function PokemonDetailView({
     details.sprites.front_default;
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.card}>
-        <Text style={styles.pokeId}>
-          #{details.id.toString().padStart(3, "0")}
-        </Text>
-        <Text style={styles.pokeName}>{details.name.toUpperCase()}</Text>
-        <Image source={{ uri: displayImage }} style={styles.image} />
-        <View style={styles.badgeRow}>
-          {details.types.map((t) => (
-            <View key={t.type.name} style={styles.badge}>
-              <Text style={styles.badgeText}>{t.type.name}</Text>
+    <SafeAreaView style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.content}
+      >
+        <View style={styles.card}>
+          <Text style={styles.pokeId}>
+            #{details.id.toString().padStart(3, "0")}
+          </Text>
+          <Text style={styles.pokeName}>{details.name.toUpperCase()}</Text>
+          <Image source={{ uri: displayImage }} style={styles.image} />
+          <View style={styles.badgeRow}>
+            {details.types.map((t) => (
+              <View key={t.type.name} style={styles.badge}>
+                <Text style={styles.badgeText}>{t.type.name}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.statsContainer}>
+          {favoritePokemon &&
+          details.name.toLowerCase() === favoritePokemon.toLowerCase() ? (
+            <Pressable onPress={() => setFavoritePokemon(null)}>
+              {isFavoriteScreen ? (
+                <Text style={styles.alreadyFavoriteButton}>
+                  Remove from Favorites
+                </Text>
+              ) : (
+                <Text style={styles.alreadyFavoriteButton}>❤️ Favorited!</Text>
+              )}
+            </Pressable>
+          ) : (
+            <Pressable onPress={() => setFavoritePokemon(details.name)}>
+              <Text style={styles.addFavoriteButton}>Add to Favorites</Text>
+            </Pressable>
+          )}
+        </View>
+
+        <View style={styles.statsContainer}>
+          <Text style={styles.sectionTitle}>Physical Attributes</Text>
+          <View style={styles.grid}>
+            <View style={styles.gridItem}>
+              <Text style={styles.gridLabel}>HEIGHT</Text>
+              <Text style={styles.gridValue}>{details.height / 10} m</Text>
+            </View>
+            <View style={styles.gridItem}>
+              <Text style={styles.gridLabel}>WEIGHT</Text>
+              <Text style={styles.gridValue}>{details.weight / 10} kg</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.statsContainer}>
+          <Text style={styles.sectionTitle}>Base Stats</Text>
+          {details.stats.map((s) => (
+            <View key={s.stat.name} style={styles.statRow}>
+              <Text style={styles.statLabel}>{s.stat.name.toUpperCase()}</Text>
+              <Text style={styles.statValue}>{s.base_stat}</Text>
             </View>
           ))}
         </View>
-      </View>
-
-      <View style={styles.statsContainer}>
-        {favoritePokemon &&
-        details.name.toLowerCase() === favoritePokemon.toLowerCase() ? (
-          <Pressable onPress={() => setFavoritePokemon(null)}>
-            {isFavoriteScreen ? (
-              <Text style={styles.alreadyFavoriteButton}>
-                Remove from Favorites
-              </Text>
-            ) : (
-              <Text style={styles.alreadyFavoriteButton}>❤️ Favorited!</Text>
-            )}
-          </Pressable>
-        ) : (
-          <Pressable onPress={() => setFavoritePokemon(details.name)}>
-            <Text style={styles.addFavoriteButton}>Add to Favorites</Text>
-          </Pressable>
-        )}
-      </View>
-
-      <View style={styles.statsContainer}>
-        <Text style={styles.sectionTitle}>Physical Attributes</Text>
-        <View style={styles.grid}>
-          <View style={styles.gridItem}>
-            <Text style={styles.gridLabel}>HEIGHT</Text>
-            <Text style={styles.gridValue}>{details.height / 10} m</Text>
-          </View>
-          <View style={styles.gridItem}>
-            <Text style={styles.gridLabel}>WEIGHT</Text>
-            <Text style={styles.gridValue}>{details.weight / 10} kg</Text>
-          </View>
-        </View>
-      </View>
-
-      <View style={styles.statsContainer}>
-        <Text style={styles.sectionTitle}>Base Stats</Text>
-        {details.stats.map((s) => (
-          <View key={s.stat.name} style={styles.statRow}>
-            <Text style={styles.statLabel}>{s.stat.name.toUpperCase()}</Text>
-            <Text style={styles.statValue}>{s.base_stat}</Text>
-          </View>
-        ))}
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 

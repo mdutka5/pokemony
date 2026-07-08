@@ -6,6 +6,7 @@ import {
   View,
   Image,
   useWindowDimensions,
+  Platform,
 } from "react-native";
 import {
   useCameraDevice,
@@ -17,6 +18,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
 } from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PokemonCameraScreen() {
   const [faceDetected, setFaceDetected] = useState(false);
@@ -97,6 +99,7 @@ export default function PokemonCameraScreen() {
   };
 
   return (
+    //<SafeAreaView style={styles.container}>
     <View style={styles.container}>
       <Camera
         style={StyleSheet.absoluteFill}
@@ -128,6 +131,7 @@ export default function PokemonCameraScreen() {
         <Ionicons name="camera-reverse-outline" size={32} color="white" />
       </TouchableOpacity>
     </View>
+    //</SafeAreaView>
   );
 }
 
@@ -136,7 +140,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   iconButton: {
     position: "absolute",
-    bottom: 40,
+    bottom: Platform.OS === "ios" ? 110 : 30,
     right: 30, // Floats nicely on the bottom-right corner of the camera view
     backgroundColor: "rgba(0, 0, 0, 0.6)", // Semi-transparent dark circle
     width: 60,

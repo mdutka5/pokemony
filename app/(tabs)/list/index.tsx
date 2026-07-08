@@ -10,6 +10,7 @@ import {
 import { useRouter } from "expo-router";
 import { useCallback, memo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 interface PokemonItem {
   name: string;
@@ -72,7 +73,7 @@ export default function ListScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       {isLoading ? (
         <ActivityIndicator size="large" color="#e63946" style={styles.loader} />
       ) : (
@@ -85,7 +86,7 @@ export default function ListScreen() {
           renderItem={renderItem}
         />
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 
