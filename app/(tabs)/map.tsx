@@ -15,6 +15,7 @@ import MapView, {
 } from "react-native-maps";
 import { useCallback, useMemo, useRef, useState } from "react";
 import {
+  BottomSheetBackdrop,
   BottomSheetFlatList,
   BottomSheetModal,
   BottomSheetView,
@@ -100,6 +101,19 @@ export default function PokeMapScreen() {
     setSelectedPin(pin);
     detailSheetRef.current?.present();
   }, []);
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        pressBehavior="close"
+        opacity={0.5}
+      />
+    ),
+    [],
+  );
 
   const handleDeletePin = useCallback(() => {
     if (!selectedPin) return;
@@ -192,6 +206,7 @@ export default function PokeMapScreen() {
       <BottomSheetModal
         ref={detailSheetRef}
         snapPoints={detailSnapPoints}
+        backdropComponent={renderBackdrop}
         onDismiss={() => setSelectedPin(null)}
       >
         <BottomSheetView style={styles.sheetContent}>
@@ -231,6 +246,7 @@ export default function PokeMapScreen() {
 
       {/* Pokémon search sheet */}
       <BottomSheetModal
+        backdropComponent={renderBackdrop}
         ref={searchSheetRef}
         snapPoints={searchSnapPoints}
         onDismiss={() => setPendingCoord(null)}
