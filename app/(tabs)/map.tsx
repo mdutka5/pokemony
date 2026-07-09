@@ -6,6 +6,7 @@ import {
   Text,
   TouchableOpacity,
   Image,
+  ActivityIndicator,
 } from "react-native";
 import MapView, {
   Marker,
@@ -18,13 +19,15 @@ import {
   BottomSheetModal,
   BottomSheetView,
 } from "@gorhom/bottom-sheet";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useMapPinsStore, type Pin } from "../../src/context/MapPinsStore";
 
 type PokemonItem = {
   name: string;
   url: string;
 };
+
+const PAGE_SIZE = 20;
 
 const getPokemonId = (url: string) => {
   const parts = url.split("/").filter(Boolean);
@@ -41,15 +44,25 @@ export default function PokeMapScreen() {
     longitude: number;
   } | null>(null);
 
-  // FIX: unique key so this regular useQuery doesn't share a cache
-  // entry with the list tab's useInfiniteQuery(["pokemon"]) — mixing
-  // the two under the same key mixes up their data shapes.
-  const { data, error } = useQuery({
-    queryKey: ["pokemon", "map"],
-    queryFn: () =>
-      fetch("https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0").then(
-        (res) => res.json(),
-      ),
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    error,
+  } = useInfiniteQuery({
+    queryKey: ["pokemon"],
+    queryFn: ({ pageParam = 0 }) =>
+      fetch(
+        `https://pokeapi.co/api/v2/pokemon?limit=${PAGE_SIZE}&offset=${pageParam}`,
+      ).then((res) => res.json()),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      if (!lastPage.next) return undefined;
+      const url = new URL(lastPage.next);
+      return parseInt(url.searchParams.get("offset") || "0", 10);
+    },
   });
 
   const detailSheetRef = useRef<BottomSheetModal>(null);
@@ -58,7 +71,24 @@ export default function PokeMapScreen() {
   const detailSnapPoints = useMemo(() => ["35%"], []);
   const searchSnapPoints = useMemo(() => ["55%", "90%"], []);
 
-  const allPokemon = data?.results || [];
+  const allPokemon = data?.pages.flatMap((page) => page.results) || [];
+
+  const loadMore = () => {
+    if (hasNextPage && !isFetchingNextPage) {
+      fetchNextPage();
+    }
+  };
+
+  const renderFooter = () => {
+    if (!isFetchingNextPage) return null;
+    return (
+      <ActivityIndicator
+        size="small"
+        color="#e63946"
+        style={{ marginVertical: 16 }}
+      />
+    );
+  };
 
   const handleLongPress = useCallback((event: LongPressEvent) => {
     const { latitude, longitude } = event.nativeEvent.coordinate;
@@ -214,6 +244,9 @@ export default function PokeMapScreen() {
           windowSize={5}
           initialNumToRender={20}
           maxToRenderPerBatch={20}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={renderFooter}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.pokemonList}
         />
