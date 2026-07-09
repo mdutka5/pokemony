@@ -252,6 +252,7 @@ export default function PokeMapScreen() {
         onDismiss={() => setPendingCoord(null)}
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
+        enableDynamicSizing={false}
       >
         <BottomSheetFlatList
           data={allPokemon}

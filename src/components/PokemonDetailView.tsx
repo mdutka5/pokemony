@@ -8,9 +8,10 @@ import {
   Pressable,
   Platform,
 } from "react-native";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { useFavoritePokemonStore } from "../context/FavoritePokemonStore";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { BottomSheetScrollView } from "@gorhom/bottom-sheet";
 
 type PokemonDetails = {
   id: number;
@@ -28,9 +29,11 @@ type PokemonDetails = {
 export default function PokemonDetailView({
   pokemonName,
   isFavoriteScreen,
+  customSafeView,
 }: {
   pokemonName: string;
   isFavoriteScreen: boolean;
+  customSafeView: boolean;
 }) {
   const [details, setDetails] = useState<PokemonDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -80,12 +83,22 @@ export default function PokemonDetailView({
     details.sprites.other?.["official-artwork"]?.front_default ||
     details.sprites.front_default;
 
+  const Wrapper = customSafeView ? Fragment : SafeAreaView;
+  const wrapperProps = customSafeView
+    ? {}
+    : {
+        style: styles.container,
+        edges:
+          Platform.OS === "android"
+            ? (["top"] as const)
+            : (["top", "bottom"] as const),
+      };
+
+  const ScrollContainer = customSafeView ? BottomSheetScrollView : ScrollView;
+
   return (
-    <SafeAreaView
-      style={styles.container}
-      edges={Platform.OS === "android" ? ["top"] : ["top", "bottom"]}
-    >
-      <ScrollView
+    <Wrapper {...wrapperProps}>
+      <ScrollContainer
         style={styles.container}
         contentContainerStyle={styles.content}
       >
@@ -146,8 +159,8 @@ export default function PokemonDetailView({
             </View>
           ))}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </ScrollContainer>
+    </Wrapper>
   );
 }
 

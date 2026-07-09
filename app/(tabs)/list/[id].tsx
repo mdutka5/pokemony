@@ -5,6 +5,10 @@ export default function PokemonDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
 
   return (
-    <PokemonDetailView pokemonName={id as string} isFavoriteScreen={false} />
+    <PokemonDetailView
+      pokemonName={id as string}
+      isFavoriteScreen={false}
+      customSafeView={false}
+    />
   );
 }

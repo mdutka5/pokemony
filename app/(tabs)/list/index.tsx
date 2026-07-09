@@ -8,9 +8,16 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useRouter } from "expo-router";
-import { useCallback, memo } from "react";
+import { useCallback, memo, useRef, useMemo, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import { useFavoritePokemonStore } from "../../../src/context/FavoritePokemonStore";
+import PokemonDetailView from "../../../src/components/PokemonDetailView";
 
 type PokemonItem = {
   name: string;
@@ -46,9 +53,10 @@ const PokemonRow = memo(({ item, onPress }: PokemonRowProps) => {
 });
 
 export default function ListScreen() {
-  const router = useRouter();
+  const detailSheetRef = useRef<BottomSheetModal>(null);
+  const [selectedPokemon, setSelectedPokemon] = useState<string | null>(null);
+  const detailSnapPoints = useMemo(() => ["53%", "90%"], []);
 
-  // 1. Switch to useInfiniteQuery
   const {
     data,
     isLoading,
@@ -74,9 +82,10 @@ export default function ListScreen() {
 
   const handlePress = useCallback(
     (name: string) => {
-      router.push(`/list/${name}`);
+      setSelectedPokemon(name);
+      detailSheetRef.current?.present();
     },
-    [router],
+    [selectedPokemon],
   );
 
   const renderItem = useCallback(
@@ -103,6 +112,19 @@ export default function ListScreen() {
     );
   };
 
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        appearsOnIndex={0}
+        disappearsOnIndex={-1}
+        pressBehavior="close"
+        opacity={0.5}
+      />
+    ),
+    [],
+  );
+
   if (error)
     return (
       <Text style={styles.emptyText}>
@@ -127,6 +149,22 @@ export default function ListScreen() {
           ListFooterComponent={renderFooter}
         />
       )}
+
+      <BottomSheetModal
+        ref={detailSheetRef}
+        snapPoints={detailSnapPoints}
+        backdropComponent={renderBackdrop}
+        onDismiss={() => setSelectedPokemon(null)}
+        enableDynamicSizing={false}
+      >
+        <SafeAreaView edges={[]} style={{ flex: 1 }}>
+          <PokemonDetailView
+            pokemonName={selectedPokemon ? selectedPokemon : ""}
+            isFavoriteScreen={false}
+            customSafeView={true}
+          />
+        </SafeAreaView>
+      </BottomSheetModal>
     </SafeAreaView>
   );
 }
@@ -169,6 +207,12 @@ const styles = StyleSheet.create({
     marginRight: 12,
     backgroundColor: "#f1f3f5",
     borderRadius: 30,
+  },
+  sheetContent: {
+    paddingHorizontal: 24,
+    paddingTop: 8,
+    paddingBottom: 24,
+    alignItems: "center",
   },
   pokemonText: { fontSize: 18, fontWeight: "600", color: "#333" },
 });

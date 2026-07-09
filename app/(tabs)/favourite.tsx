@@ -25,6 +25,7 @@ export default function FavoritesTabScreen() {
     <PokemonDetailView
       pokemonName={favoritePokemon}
       isFavoriteScreen={true as boolean}
+      customSafeView={false}
     />
   );
 }
