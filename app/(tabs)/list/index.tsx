@@ -12,10 +12,10 @@ import { useCallback, memo } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-interface PokemonItem {
+type PokemonItem = {
   name: string;
   url: string;
-}
+};
 
 const PAGE_SIZE = 20;
 

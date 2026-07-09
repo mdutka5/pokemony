@@ -2,10 +2,10 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 // 1. Swap the import to AsyncStorage
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-interface FavoritePokemonContextType {
+type FavoritePokemonContextType = {
   favoritePokemon: string | null;
   setFavoritePokemon: (name: string | null) => Promise<void>;
-}
+};
 
 const FavoritePokemonContext = createContext<
   FavoritePokemonContextType | undefined

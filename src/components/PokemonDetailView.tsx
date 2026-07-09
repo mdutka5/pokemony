@@ -12,7 +12,7 @@ import { useState, useEffect } from "react";
 import { useFavoritePokemonStore } from "../context/FavoritePokemonStore";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-interface PokemonDetails {
+type PokemonDetails = {
   id: number;
   name: string;
   height: number;
@@ -23,7 +23,7 @@ interface PokemonDetails {
   };
   types: Array<{ type: { name: string } }>;
   stats: Array<{ base_stat: number; stat: { name: string } }>;
-}
+};
 
 export default function PokemonDetailView({
   pokemonName,
