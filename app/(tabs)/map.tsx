@@ -13,7 +13,7 @@ import MapView, {
   LongPressEvent,
   PROVIDER_GOOGLE,
 } from "react-native-maps";
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BottomSheetBackdrop,
   BottomSheetFlatList,
@@ -22,6 +22,7 @@ import {
 } from "@gorhom/bottom-sheet";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useMapPinsStore, type Pin } from "../../src/context/MapPinsStore";
+import * as Location from "expo-location";
 
 type PokemonItem = {
   name: string;
@@ -73,6 +74,35 @@ export default function PokeMapScreen() {
   const searchSnapPoints = useMemo(() => ["55%", "90%"], []);
 
   const allPokemon = data?.pages.flatMap((page) => page.results) || [];
+
+  const mapRef = useRef<MapView>(null);
+  const [initialRegion, setInitialRegion] = useState({
+    latitude: 50.0628,
+    longitude: 19.939,
+    latitudeDelta: 0.0522,
+    longitudeDelta: 0.0221,
+  });
+
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.warn("Location permission denied");
+        return;
+      }
+
+      const location = await Location.getCurrentPositionAsync({});
+      const region = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude,
+        latitudeDelta: 0.0522,
+        longitudeDelta: 0.0221,
+      };
+
+      setInitialRegion(region);
+      mapRef.current?.animateToRegion(region, 800);
+    })();
+  }, []);
 
   const loadMore = () => {
     if (hasNextPage && !isFetchingNextPage) {
@@ -179,14 +209,10 @@ export default function PokeMapScreen() {
   return (
     <View style={styles.container}>
       <MapView
+        ref={mapRef}
         style={styles.map}
         provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
-        initialRegion={{
-          latitude: 50.0628,
-          longitude: 19.939,
-          latitudeDelta: 0.0522,
-          longitudeDelta: 0.0221,
-        }}
+        initialRegion={initialRegion}
         showsUserLocation={true}
         showsMyLocationButton={true}
         onLongPress={handleLongPress}
