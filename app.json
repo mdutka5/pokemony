@@ -3,6 +3,7 @@
     "name": "pokemony",
     "slug": "pokemony",
     "version": "1.0.0",
+    "scheme": "pokemony",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
