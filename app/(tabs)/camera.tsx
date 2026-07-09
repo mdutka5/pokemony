@@ -61,7 +61,7 @@ export default function PokemonCameraScreen() {
     }
     // Shift up a bit so Snorlax sits a little above the face, not centered
     // dead over it.
-    pokemonY.value = bounds.y - bounds.height * 0.25;
+    pokemonY.value = bounds.y - bounds.height * 0.5;
 
     setFaceDetected(true);
   }
