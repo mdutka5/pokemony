@@ -21,6 +21,7 @@ import Animated, {
   useSharedValue,
 } from "react-native-reanimated";
 import { captureRef } from "react-native-view-shot";
+import { Asset, usePermissions } from "expo-media-library";
 
 const MIRROR_FRONT_PHOTO = true;
 
@@ -52,6 +53,10 @@ export default function PokemonCameraScreen() {
     placement: Placement | null;
   } | null>(null);
   const [resultUri, setResultUri] = useState<string | null>(null);
+
+  const [isSaving, setIsSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [mediaPermission, requestMediaPermission] = usePermissions();
 
   const faceDetectorOptions = useRef({
     performanceMode: "fast" as const,
@@ -94,6 +99,30 @@ export default function PokemonCameraScreen() {
     if (!hasPermission) requestPermission();
   }, [hasPermission]);
 
+  const saveToGallery = async () => {
+    if (!resultUri || isSaving) return;
+
+    try {
+      setIsSaving(true);
+
+      let permission = mediaPermission;
+      if (!permission?.granted) {
+        permission = await requestMediaPermission();
+      }
+      if (!permission?.granted) {
+        console.warn("Media library permission denied");
+        return;
+      }
+
+      await Asset.create(resultUri);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch (e) {
+      console.error("saveToGallery failed", e);
+    } finally {
+      setIsSaving(false);
+    }
+  };
   const takePicture = async () => {
     if (isCapturing) return;
     setIsCapturing(true);
@@ -244,6 +273,23 @@ export default function PokemonCameraScreen() {
           >
             <Ionicons name="close" size={32} color="white" />
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={saveToGallery}
+            disabled={isSaving}
+            activeOpacity={0.7}
+          >
+            {isSaving ? (
+              <ActivityIndicator color="white" />
+            ) : (
+              <Ionicons
+                name={saved ? "checkmark" : "download-outline"}
+                size={28}
+                color="white"
+              />
+            )}
+          </TouchableOpacity>
         </View>
       )}
     </View>
@@ -303,4 +349,15 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   pokemonImage: { width: "100%", height: "100%" },
+  saveButton: {
+    position: "absolute",
+    top: 60,
+    right: 24,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });

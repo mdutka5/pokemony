@@ -46,6 +46,15 @@ module.exports = {
         },
       ],
       "@react-native-vector-icons/material-design-icons",
+      [
+        "expo-media-library",
+        {
+          photosPermission:
+            "Allow $(PRODUCT_NAME) to save your Pokémon photos to your gallery.",
+          savePhotosPermission:
+            "Allow $(PRODUCT_NAME) to save your Pokémon photos to your gallery.",
+        },
+      ],
     ],
   },
 };
