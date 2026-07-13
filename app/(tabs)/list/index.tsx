@@ -7,8 +7,8 @@ import {
   Image,
   ActivityIndicator,
 } from "react-native";
-import { useRouter } from "expo-router";
 import { useCallback, memo, useRef, useMemo, useState } from "react";
+import Animated from "react-native-reanimated";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { SafeAreaView } from "react-native-safe-area-context";
 import {
@@ -37,16 +37,31 @@ type PokemonRowProps = {
 };
 
 const PokemonRow = memo(({ item, onPress }: PokemonRowProps) => {
+  const favoritePokemon = useFavoritePokemonStore(
+    (state) => state.favoritePokemon,
+  );
   const pokemonId = getPokemonId(item.url);
   const imageUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`;
 
   return (
-    <Pressable style={styles.pokemonItem} onPress={() => onPress(item.name)}>
+    <Pressable
+      style={{
+        ...styles.pokemonItem,
+        backgroundColor: favoritePokemon === item.name ? "#FFD700" : "#fff",
+      }}
+      onPress={() => onPress(item.name)}
+    >
       <View style={styles.listItemContainer}>
         <Text style={styles.pokemonText}>
           #{pokemonId} {item.name}
         </Text>
-        <Image source={{ uri: imageUrl }} style={styles.pokemonImage} />
+        <Image
+          source={{ uri: imageUrl }}
+          style={{
+            ...styles.pokemonImage,
+            backgroundColor: favoritePokemon === item.name ? "#FFFDD9" : "#fff",
+          }}
+        />
       </View>
     </Pressable>
   );
@@ -77,6 +92,10 @@ export default function ListScreen() {
       return parseInt(url.searchParams.get("offset") || "0", 10);
     },
   });
+
+  const favoritePokemon = useFavoritePokemonStore(
+    (state) => state.favoritePokemon,
+  );
 
   const allPokemon = data?.pages.flatMap((page) => page.results) || [];
 
@@ -132,12 +151,19 @@ export default function ListScreen() {
       </Text>
     );
 
+  const stickyIndices = useMemo(() => {
+    const favPokemonIndex = allPokemon.findIndex(
+      (pokemon) => pokemon.name === favoritePokemon,
+    );
+    return favPokemonIndex !== -1 ? [favPokemonIndex] : [];
+  }, [favoritePokemon, allPokemon]);
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       {isLoading ? (
         <ActivityIndicator size="large" color="#e63946" style={styles.loader} />
       ) : (
-        <FlatList
+        <Animated.FlatList
           data={allPokemon}
           keyExtractor={(item) => getPokemonId(item.url)}
           windowSize={5}
@@ -147,6 +173,7 @@ export default function ListScreen() {
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
           ListFooterComponent={renderFooter}
+          stickyHeaderIndices={stickyIndices}
         />
       )}
 
