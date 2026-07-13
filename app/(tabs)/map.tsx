@@ -23,6 +23,7 @@ import {
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useMapPinsStore, type Pin } from "../../src/context/MapPinsStore";
 import * as Location from "expo-location";
+import { Photo, usePhotoStore } from "../../src/context/PhotoStore";
 
 type PokemonItem = {
   name: string;
@@ -45,6 +46,10 @@ export default function PokeMapScreen() {
     latitude: number;
     longitude: number;
   } | null>(null);
+
+  const photos = usePhotoStore((s) => s.photos);
+  const removePhoto = usePhotoStore((s) => s.removePhoto);
+  const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
 
   const {
     data,
@@ -140,6 +145,10 @@ export default function PokeMapScreen() {
         disappearsOnIndex={-1}
         pressBehavior="close"
         opacity={0.5}
+        onPress={() => {
+          setSelectedPin(null);
+          setSelectedPhoto(null);
+        }}
       />
     ),
     [],
@@ -166,6 +175,17 @@ export default function PokeMapScreen() {
     },
     [pendingCoord],
   );
+
+  const handlePhotoPress = useCallback((photo: Photo) => {
+    setSelectedPhoto(photo);
+    detailSheetRef.current?.present();
+  }, []);
+
+  const handleDeletePhoto = useCallback(() => {
+    if (!selectedPhoto) return;
+    removePhoto(selectedPhoto.id);
+    detailSheetRef.current?.dismiss();
+  }, [selectedPhoto]);
 
   const formatCoord = (
     value: number,
@@ -195,7 +215,6 @@ export default function PokeMapScreen() {
     [handleSelectPokemon],
   );
 
-  // hooks are all above this line — safe to gate the return now
   if (error) {
     return (
       <View style={styles.container}>
@@ -226,6 +245,22 @@ export default function PokeMapScreen() {
             onPress={() => handleMarkerPress(pin)}
           />
         ))}
+        {photos.map((photo) => (
+          <Marker
+            key={photo.id}
+            coordinate={{
+              latitude: photo.latitude,
+              longitude: photo.longitude,
+            }}
+            pinColor="blue"
+            onPress={() => handlePhotoPress(photo)}
+          >
+            <Image
+              source={{ uri: photo.uri }}
+              style={{ width: 80, height: 120 }}
+            />
+          </Marker>
+        ))}
       </MapView>
 
       {/* Pin detail sheet */}
@@ -233,7 +268,10 @@ export default function PokeMapScreen() {
         ref={detailSheetRef}
         snapPoints={detailSnapPoints}
         backdropComponent={renderBackdrop}
-        onDismiss={() => setSelectedPin(null)}
+        onDismiss={() => {
+          setSelectedPin(null);
+          setSelectedPhoto(null);
+        }}
       >
         <BottomSheetView style={styles.sheetContent}>
           {selectedPin && (
@@ -254,9 +292,33 @@ export default function PokeMapScreen() {
               <View style={styles.sheetActions}>
                 <TouchableOpacity
                   style={styles.btnDelete}
-                  onPress={handleDeletePin}
+                  onPress={() => {
+                    if (selectedPin) handleDeletePin();
+                    if (selectedPhoto) handleDeletePhoto();
+                  }}
                 >
                   <Text style={styles.btnDeleteText}>Delete Pin</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.btnClose}
+                  onPress={() => detailSheetRef.current?.dismiss()}
+                >
+                  <Text style={styles.btnCloseText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
+          {selectedPhoto && (
+            <>
+              <View style={styles.sheetActions}>
+                <TouchableOpacity
+                  style={styles.btnDelete}
+                  onPress={() => {
+                    if (selectedPin) handleDeletePin();
+                    if (selectedPhoto) handleDeletePhoto();
+                  }}
+                >
+                  <Text style={styles.btnDeleteText}>Delete Photo</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.btnClose}

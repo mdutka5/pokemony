@@ -7,6 +7,8 @@ export type Photo = {
   id: string;
   uri: string;
   takenAt: number;
+  latitude: number;
+  longitude: number;
 };
 
 type PhotoState = {
